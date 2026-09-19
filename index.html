@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vietnam Job Market Map - Power BI</title>
-  
-  <!-- Leaflet CSS -->
+  <title>Bản Đồ Thị Trường Việc Làm Việt Nam - Power BI</title>
+
+  <!-- Leaflet CSS từ CDN -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -25,39 +25,48 @@
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: #f8fafc;
+      color: #0f172a;
     }
 
-    #map-wrapper {
+    /* Khung chứa toàn màn hình */
+    #dashboard-container {
       position: relative;
       width: 100%;
       height: 100%;
-      min-height: 500px;
-      background: #aad3df;
+      display: flex;
+      flex-direction: column;
     }
 
-    #vietnam-map {
-      width: 100%;
-      height: 100%;
-    }
-
-    /* Region Filter Buttons */
-    .region-toolbar {
+    /* Thanh điều khiển trên cùng */
+    .top-bar {
       position: absolute;
       top: 12px;
-      left: 60px;
+      left: 12px;
       z-index: 1000;
       display: flex;
-      gap: 6px;
+      gap: 8px;
+      align-items: center;
       background: rgba(255, 255, 255, 0.95);
-      padding: 4px;
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
       border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
     }
 
-    .region-btn {
-      border: none;
-      background: transparent;
+    .top-bar .title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .filter-btn {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
       padding: 4px 10px;
       font-size: 11px;
       font-weight: 600;
@@ -67,39 +76,41 @@
       transition: all 0.2s ease;
     }
 
-    .region-btn:hover {
+    .filter-btn:hover {
       background: #f1f5f9;
       color: #0f172a;
     }
 
-    .region-btn.active {
+    .filter-btn.active {
       background: #ea580c;
       color: #ffffff;
+      border-color: #ea580c;
     }
 
-    /* Legend Badge */
-    .map-legend {
+    /* Bảng chú thích mật độ */
+    .density-legend {
       position: absolute;
       top: 12px;
       right: 12px;
       z-index: 1000;
       background: rgba(255, 255, 255, 0.95);
-      padding: 6px 10px;
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
       border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
       font-size: 11px;
       font-weight: 600;
       color: #334155;
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
-      border: 1px solid #cbd5e1;
+      gap: 12px;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .legend-dot {
@@ -107,27 +118,34 @@
       border-radius: 50%;
     }
 
-    /* Marker Elements */
-    .custom-map-icon {
+    /* Khung bản đồ */
+    #map-view {
+      width: 100%;
+      height: 100%;
+      background: #aad3df;
+    }
+
+    /* Custom Leaflet Markers & Radar Animation */
+    .custom-leaflet-icon {
       background: transparent;
       border: none;
     }
 
-    .leaflet-hub-marker {
+    .hub-marker-wrapper {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .leaflet-hub-marker .hub-pulse {
+    .hub-pulse-radar {
       position: absolute;
       border-radius: 50%;
       opacity: 0.45;
-      animation: mapPulse 2s infinite ease-in-out;
+      animation: mapRadarPulse 2s infinite ease-in-out;
     }
 
-    .leaflet-hub-marker .hub-dot {
+    .hub-center-core {
       position: relative;
       border-radius: 50%;
       border: 2.5px solid #ffffff;
@@ -135,241 +153,278 @@
       z-index: 2;
     }
 
-    @keyframes mapPulse {
+    @keyframes mapRadarPulse {
       0% {
         transform: scale(0.6);
         opacity: 0.8;
       }
       70% {
-        transform: scale(1.5);
+        transform: scale(1.6);
         opacity: 0;
       }
       100% {
-        transform: scale(1.5);
+        transform: scale(1.6);
         opacity: 0;
       }
     }
 
-    /* Tooltips */
-    .leaflet-permanent-tooltip {
+    /* Style Tooltip */
+    .leaflet-permanent-hub-card {
       background: #ffffff !important;
       border: 1px solid #cbd5e1 !important;
       border-radius: 8px !important;
-      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12) !important;
-      padding: 6px 8px !important;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14) !important;
+      padding: 6px 10px !important;
+      font-family: inherit !important;
     }
 
-    .leaflet-hover-tooltip {
+    .leaflet-hover-node-card {
       background: #ffffff !important;
       border: 1px solid #cbd5e1 !important;
       border-radius: 8px !important;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16) !important;
-      padding: 6px 10px !important;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16) !important;
+      padding: 8px 12px !important;
+      font-family: inherit !important;
     }
   </style>
 </head>
 <body>
-  <div id="map-wrapper">
+  <div id="dashboard-container">
     <!-- Toolbar miền -->
-    <div class="region-toolbar">
-      <button class="region-btn active" onclick="setRegion('all')">Tất cả</button>
-      <button class="region-btn" onclick="setRegion('north')">Miền Bắc</button>
-      <button class="region-btn" onclick="setRegion('central')">Miền Trung</button>
-      <button class="region-btn" onclick="setRegion('south')">Miền Nam</button>
+    <div class="top-bar">
+      <span class="title">🇻🇳 Việc Làm Theo Vùng</span>
+      <button class="filter-btn active" onclick="applyRegionFilter('all')">Tất cả</button>
+      <button class="filter-btn" onclick="applyRegionFilter('north')">Miền Bắc</button>
+      <button class="filter-btn" onclick="applyRegionFilter('central')">Miền Trung</button>
+      <button class="filter-btn" onclick="applyRegionFilter('south')">Miền Nam</button>
     </div>
 
     <!-- Chú thích mật độ -->
-    <div class="map-legend">
-      <strong style="color: #0f172a;">Mật độ:</strong>
+    <div class="density-legend">
+      <span style="color: #0f172a; font-weight: 700;">Quy mô:</span>
       <span class="legend-item">
-        <span class="legend-dot" style="width: 10px; height: 10px; background: #ea580c;"></span> &gt;1.000
+        <span class="legend-dot" style="width: 10px; height: 10px; background: #ea580c;"></span> &gt;1.000 việc
       </span>
       <span class="legend-item">
-        <span class="legend-dot" style="width: 8px; height: 8px; background: #f97316;"></span> &gt;50
+        <span class="legend-dot" style="width: 8px; height: 8px; background: #f97316;"></span> &gt;50 việc
       </span>
       <span class="legend-item">
-        <span class="legend-dot" style="width: 6px; height: 6px; background: #0284c7;"></span> &gt;10
+        <span class="legend-dot" style="width: 6px; height: 6px; background: #0284c7;"></span> &gt;10 việc
       </span>
     </div>
 
-    <!-- Khung bản đồ -->
-    <div id="vietnam-map"></div>
+    <!-- Nơi render bản đồ -->
+    <div id="map-view"></div>
   </div>
 
-  <!-- Leaflet JS -->
+  <!-- Leaflet JS từ CDN -->
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     crossorigin=""
   ></script>
 
   <script>
-    // Dữ liệu baseline các tỉnh thành
-    const BASELINE_STATS = {
-      'hà nội': { jobCount: 1442, companyCount: 830, percentage: 32.1 },
-      'hồ chí minh': { jobCount: 1143, companyCount: 759, percentage: 25.4 },
-      'đà nẵng': { jobCount: 63, companyCount: 44, percentage: 1.4 },
-      'hải phòng': { jobCount: 120, companyCount: 79, percentage: 2.7 },
-      'bắc ninh': { jobCount: 101, companyCount: 70, percentage: 2.2 },
-      'đồng nai': { jobCount: 86, companyCount: 63, percentage: 1.9 },
-      'hưng yên': { jobCount: 82, companyCount: 56, percentage: 1.8 },
-      'bình dương': { jobCount: 71, companyCount: 34, percentage: 1.6 },
-      'hải dương': { jobCount: 51, companyCount: 24, percentage: 1.1 },
-      'bà rịa - vũng tàu': { jobCount: 28, companyCount: 21, percentage: 0.6 },
-      'cà mau': { jobCount: 24, companyCount: 5, percentage: 0.5 },
-      'thái nguyên': { jobCount: 22, companyCount: 15, percentage: 0.5 },
-      'long an': { jobCount: 22, companyCount: 18, percentage: 0.5 },
-      'khánh hòa': { jobCount: 21, companyCount: 17, percentage: 0.5 },
-      'bắc giang': { jobCount: 20, companyCount: 9, percentage: 0.4 },
-      'nghệ an': { jobCount: 18, companyCount: 15, percentage: 0.4 },
-      'quảng ninh': { jobCount: 16, companyCount: 14, percentage: 0.4 },
-      'cần thơ': { jobCount: 14, companyCount: 10, percentage: 0.3 },
-      'kiên giang': { jobCount: 14, companyCount: 7, percentage: 0.3 },
-      'tây ninh': { jobCount: 14, companyCount: 10, percentage: 0.3 },
-      'hà nam': { jobCount: 12, companyCount: 10, percentage: 0.3 },
-      'lâm đồng': { jobCount: 12, companyCount: 8, percentage: 0.3 },
-      'bến tre': { jobCount: 11, companyCount: 4, percentage: 0.2 },
-      'thanh hóa': { jobCount: 11, companyCount: 9, percentage: 0.2 },
-      'tiền giang': { jobCount: 10, companyCount: 6, percentage: 0.2 },
-      'quảng nam': { jobCount: 9, companyCount: 5, percentage: 0.2 },
-      'thừa thiên huế': { jobCount: 7, companyCount: 4, percentage: 0.2 },
-      'quảng ngãi': { jobCount: 7, companyCount: 6, percentage: 0.2 },
-      'vĩnh phúc': { jobCount: 5, companyCount: 5, percentage: 0.1 },
-      'thái bình': { jobCount: 5, companyCount: 5, percentage: 0.1 },
-      'bình định': { jobCount: 2, companyCount: 2, percentage: 0.0 },
-      'nam định': { jobCount: 1, companyCount: 1, percentage: 0.0 },
-      'bình phước': { jobCount: 1, companyCount: 1, percentage: 0.0 }
-    };
-
-    // Tọa độ địa lý các tỉnh
-    const VIETNAM_GEO_NODES = [
-      { id: 'hanoi', name: 'Hà Nội', region: 'north', lat: 21.0285, lng: 105.8542, isKeyHub: true },
-      { id: 'haiphong', name: 'Hải Phòng', region: 'north', lat: 20.8449, lng: 106.6881 },
-      { id: 'quangninh', name: 'Quảng Ninh', region: 'north', lat: 20.9599, lng: 107.0425 },
-      { id: 'bacninh', name: 'Bắc Ninh', region: 'north', lat: 21.1861, lng: 106.0763 },
-      { id: 'hungyen', name: 'Hưng Yên', region: 'north', lat: 20.6464, lng: 106.0511 },
-      { id: 'haiduong', name: 'Hải Dương', region: 'north', lat: 20.9373, lng: 106.3146 },
-      { id: 'vinhphuc', name: 'Vĩnh Phúc', region: 'north', lat: 21.3089, lng: 105.6049 },
-      { id: 'thainguyen', name: 'Thái Nguyên', region: 'north', lat: 21.5928, lng: 105.8442 },
-      { id: 'bacgiang', name: 'Bắc Giang', region: 'north', lat: 21.2731, lng: 106.1946 },
-      { id: 'hanam', name: 'Hà Nam', region: 'north', lat: 20.545, lng: 105.912 },
-      { id: 'namdinh', name: 'Nam Định', region: 'north', lat: 20.4344, lng: 106.1773 },
-      { id: 'thaibinh', name: 'Thái Bình', region: 'north', lat: 20.4463, lng: 106.3366 },
-      { id: 'thanhhoa', name: 'Thanh Hóa', region: 'north', lat: 19.8067, lng: 105.7852 },
-      { id: 'nghean', name: 'Nghệ An', region: 'north', lat: 18.6734, lng: 105.6813 },
-      
-      { id: 'danang', name: 'Đà Nẵng', region: 'central', lat: 16.0544, lng: 108.2022, isKeyHub: true },
-      { id: 'thuathienhue', name: 'Thừa Thiên Huế', region: 'central', lat: 16.4637, lng: 107.5909 },
-      { id: 'quangnam', name: 'Quảng Nam', region: 'central', lat: 15.5651, lng: 108.4815 },
-      { id: 'quangngai', name: 'Quảng Ngãi', region: 'central', lat: 15.1205, lng: 108.7923 },
-      { id: 'binhdinh', name: 'Bình Định', region: 'central', lat: 13.782, lng: 109.2197 },
-      { id: 'khanhhoa', name: 'Khánh Hòa', region: 'central', lat: 12.2388, lng: 109.1967 },
-      { id: 'lamdong', name: 'Lâm Đồng', region: 'central', lat: 11.9404, lng: 108.4583 },
-
-      { id: 'hochiminh', name: 'Hồ Chí Minh', region: 'south', lat: 10.8231, lng: 106.6297, isKeyHub: true },
-      { id: 'binhduong', name: 'Bình Dương', region: 'south', lat: 11.1606, lng: 106.657 },
-      { id: 'dongnai', name: 'Đồng Nai', region: 'south', lat: 10.9575, lng: 106.8426 },
-      { id: 'bariavungtau', name: 'Bà Rịa - Vũng Tàu', region: 'south', lat: 10.4966, lng: 107.1685 },
-      { id: 'tayninh', name: 'Tây Ninh', region: 'south', lat: 11.31, lng: 106.098 },
-      { id: 'binhphuoc', name: 'Bình Phước', region: 'south', lat: 11.533, lng: 106.883 },
-      { id: 'longan', name: 'Long An', region: 'south', lat: 10.5361, lng: 106.4116 },
-      { id: 'tiengiang', name: 'Tiền Giang', region: 'south', lat: 10.36, lng: 106.36 },
-      { id: 'bentre', name: 'Bến Tre', region: 'south', lat: 10.243, lng: 106.375 },
-      { id: 'cantho', name: 'Cần Thơ', region: 'south', lat: 10.0452, lng: 105.7469 },
-      { id: 'kiengiang', name: 'Kiên Giang', region: 'south', lat: 10.0125, lng: 105.0809 },
-      { id: 'camau', name: 'Cà Mau', region: 'south', lat: 9.1769, lng: 105.1524 }
+    /**
+     * DỮ LIỆU BAN ĐẦU (Mô phỏng 2 biến: location_standard & DistinctCount job_title)
+     * Khi Power BI truyền dữ liệu mới vào, hàm updateMapData() sẽ cập nhật lại toàn bộ bản đồ.
+     */
+    let currentData = [
+      { location_standard: "Hà Nội", distinct_job_titles: 1442 },
+      { location_standard: "Hồ Chí Minh", distinct_job_titles: 1143 },
+      { location_standard: "Hải Phòng", distinct_job_titles: 120 },
+      { location_standard: "Bắc Ninh", distinct_job_titles: 101 },
+      { location_standard: "Đồng Nai", distinct_job_titles: 86 },
+      { location_standard: "Hưng Yên", distinct_job_titles: 82 },
+      { location_standard: "Bình Dương", distinct_job_titles: 71 },
+      { location_standard: "Đà Nẵng", distinct_job_titles: 63 },
+      { location_standard: "Hải Dương", distinct_job_titles: 51 },
+      { location_standard: "Bà Rịa - Vũng Tàu", distinct_job_titles: 28 },
+      { location_standard: "Cà Mau", distinct_job_titles: 24 },
+      { location_standard: "Thái Nguyên", distinct_job_titles: 22 },
+      { location_standard: "Long An", distinct_job_titles: 22 },
+      { location_standard: "Khánh Hòa", distinct_job_titles: 21 },
+      { location_standard: "Bắc Giang", distinct_job_titles: 20 },
+      { location_standard: "Nghệ An", distinct_job_titles: 18 },
+      { location_standard: "Quảng Ninh", distinct_job_titles: 16 },
+      { location_standard: "Cần Thơ", distinct_job_titles: 14 },
+      { location_standard: "Kiên Giang", distinct_job_titles: 14 },
+      { location_standard: "Tây Ninh", distinct_job_titles: 14 },
+      { location_standard: "Hà Nam", distinct_job_titles: 12 },
+      { location_standard: "Lâm Đồng", distinct_job_titles: 12 },
+      { location_standard: "Bến Tre", distinct_job_titles: 11 },
+      { location_standard: "Thanh Hóa", distinct_job_titles: 11 },
+      { location_standard: "Tiền Giang", distinct_job_titles: 10 },
+      { location_standard: "Quảng Nam", distinct_job_titles: 9 },
+      { location_standard: "Thừa Thiên Huế", distinct_job_titles: 7 },
+      { location_standard: "Quảng Ngãi", distinct_job_titles: 7 },
+      { location_standard: "Vĩnh Phúc", distinct_job_titles: 5 },
+      { location_standard: "Thái Bình", distinct_job_titles: 5 },
+      { location_standard: "Bình Định", distinct_job_titles: 2 },
+      { location_standard: "Nam Định", distinct_job_titles: 1 },
+      { location_standard: "Bình Phước", distinct_job_titles: 1 }
     ];
 
-    let map;
-    let layerGroup;
-    let currentRegion = 'all';
+    // Từ điển tọa độ chuẩn xác các tỉnh/thành Việt Nam
+    const VIETNAM_GEO_INDEX = {
+      "hà nội": { lat: 21.0285, lng: 105.8542, region: "north", isHub: true },
+      "hải phòng": { lat: 20.8449, lng: 106.6881, region: "north" },
+      "quảng ninh": { lat: 20.9599, lng: 107.0425, region: "north" },
+      "bắc ninh": { lat: 21.1861, lng: 106.0763, region: "north" },
+      "hưng yên": { lat: 20.6464, lng: 106.0511, region: "north" },
+      "hải dương": { lat: 20.9373, lng: 106.3146, region: "north" },
+      "vĩnh phúc": { lat: 21.3089, lng: 105.6049, region: "north" },
+      "thái nguyên": { lat: 21.5928, lng: 105.8442, region: "north" },
+      "bắc giang": { lat: 21.2731, lng: 106.1946, region: "north" },
+      "hà nam": { lat: 20.5450, lng: 105.9120, region: "north" },
+      "nam định": { lat: 20.4344, lng: 106.1773, region: "north" },
+      "thái bình": { lat: 20.4463, lng: 106.3366, region: "north" },
+      "thanh hóa": { lat: 19.8067, lng: 105.7852, region: "north" },
+      "nghệ an": { lat: 18.6734, lng: 105.6813, region: "north" },
+      "hà tĩnh": { lat: 18.3429, lng: 105.9059, region: "north" },
 
-    function initMap() {
-      // Khởi tạo Leaflet Map
-      map = L.map('vietnam-map', {
+      "đà nẵng": { lat: 16.0544, lng: 108.2022, region: "central", isHub: true },
+      "thừa thiên huế": { lat: 16.4637, lng: 107.5909, region: "central" },
+      "quảng trị": { lat: 16.8163, lng: 107.1001, region: "central" },
+      "quảng bình": { lat: 17.4690, lng: 106.6225, region: "central" },
+      "quảng nam": { lat: 15.5651, lng: 108.4815, region: "central" },
+      "quảng ngãi": { lat: 15.1205, lng: 108.7923, region: "central" },
+      "bình định": { lat: 13.7820, lng: 109.2197, region: "central" },
+      "phú yên": { lat: 13.0882, lng: 109.3075, region: "central" },
+      "khánh hòa": { lat: 12.2388, lng: 109.1967, region: "central" },
+      "đắk lắk": { lat: 12.6667, lng: 108.0383, region: "central" },
+      "gia lai": { lat: 13.9833, lng: 108.0000, region: "central" },
+      "lâm đồng": { lat: 11.9404, lng: 108.4583, region: "central" },
+      "bình thuận": { lat: 10.9273, lng: 108.1022, region: "central" },
+
+      "hồ chí minh": { lat: 10.8231, lng: 106.6297, region: "south", isHub: true },
+      "bình dương": { lat: 11.1606, lng: 106.6570, region: "south" },
+      "đồng nai": { lat: 10.9575, lng: 106.8426, region: "south" },
+      "bà rịa - vũng tàu": { lat: 10.4966, lng: 107.1685, region: "south" },
+      "tây ninh": { lat: 11.3100, lng: 106.0980, region: "south" },
+      "bình phước": { lat: 11.5330, lng: 106.8830, region: "south" },
+      "long an": { lat: 10.5361, lng: 106.4116, region: "south" },
+      "tiền giang": { lat: 10.3600, lng: 106.3600, region: "south" },
+      "bến tre": { lat: 10.2430, lng: 106.3750, region: "south" },
+      "cần thơ": { lat: 10.0452, lng: 105.7469, region: "south" },
+      "đồng tháp": { lat: 10.4578, lng: 105.6331, region: "south" },
+      "an giang": { lat: 10.3759, lng: 105.4185, region: "south" },
+      "kiên giang": { lat: 10.0125, lng: 105.0809, region: "south" },
+      "cà mau": { lat: 9.1769, lng: 105.1524, region: "south" }
+    };
+
+    let mapInstance = null;
+    let markersLayer = null;
+    let activeRegion = "all";
+
+    // Chuẩn hóa tên tỉnh từ Power BI (bỏ các tiền tố TP, Tỉnh, viết thường)
+    function cleanLocationName(rawName) {
+      if (!rawName) return "";
+      let s = rawName.toString().toLowerCase().trim();
+      s = s.replace(/^tp\.?\s*/, "")
+           .replace(/^thành phố\s*/, "")
+           .replace(/^tỉnh\s*/, "")
+           .trim();
+      if (s === "hcm" || s === "tp hcm" || s === "sài gòn") return "hồ chí minh";
+      if (s === "hn") return "hà nội";
+      if (s === "dn") return "đà nẵng";
+      return s;
+    }
+
+    // Khởi tạo bản đồ Leaflet
+    function setupMap() {
+      mapInstance = L.map("map-view", {
         center: [16.0, 107.5],
         zoom: 6,
         minZoom: 5,
-        maxZoom: 14,
+        maxZoom: 15,
         zoomControl: true
       });
 
-      // Lớp bản đồ ESRI World Street Map (Miễn phí, không watermark, độ nét cao)
-      L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        {
-          maxZoom: 18,
-          attribution: 'Bản đồ &copy; Esri &mdash; Vietnam Job Market'
-        }
-      ).addTo(map);
+      // Lớp Tile Esri World Street Map (Miễn phí, không watermark, chi tiết)
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 18,
+        attribution: "Bản đồ &copy; Esri &mdash; Power BI Vietnam Map"
+      }).addTo(mapInstance);
 
-      layerGroup = L.layerGroup().addTo(map);
-      renderMarkers();
+      markersLayer = L.layerGroup().addTo(mapInstance);
 
-      // Fix tự động căn kích thước trong khung Power BI
-      setTimeout(() => map.invalidateSize(), 200);
-      window.addEventListener('resize', () => map.invalidateSize());
+      renderMapMarkers();
+
+      window.addEventListener("resize", () => {
+        if (mapInstance) mapInstance.invalidateSize();
+      });
+      setTimeout(() => mapInstance.invalidateSize(), 300);
     }
 
-    function renderMarkers() {
-      layerGroup.clearLayers();
+    // Vẽ toàn bộ các điểm node dựa trên dữ liệu đang có
+    function renderMapMarkers() {
+      if (!markersLayer) return;
+      markersLayer.clearLayers();
 
-      const nodes = currentRegion === 'all'
-        ? VIETNAM_GEO_NODES
-        : VIETNAM_GEO_NODES.filter(n => n.region === currentRegion);
+      // Tính tổng số job để tính phần trăm (%)
+      let grandTotal = 0;
+      currentData.forEach(row => {
+        const count = row.distinct_job_titles || row.job_title_count || row.count || 0;
+        grandTotal += Number(count);
+      });
 
-      nodes.forEach(node => {
-        const key = node.name.toLowerCase();
-        const stat = BASELINE_STATS[key] || { jobCount: 0, companyCount: 0, percentage: 0 };
-        const count = stat.jobCount;
-        const isHub = node.isKeyHub;
+      currentData.forEach(row => {
+        const rawLoc = row.location_standard || row.name || "";
+        const cleanName = cleanLocationName(rawLoc);
+        const geoInfo = VIETNAM_GEO_INDEX[cleanName];
 
-        let hubColor = '#ea580c';
-        if (node.id === 'danang') hubColor = '#0284c7';
-        if (node.id === 'hochiminh') hubColor = '#16a34a';
+        if (!geoInfo) return;
 
+        // Lọc theo miền nếu có
+        if (activeRegion !== "all" && geoInfo.region !== activeRegion) {
+          return;
+        }
+
+        const count = Number(row.distinct_job_titles || row.job_title_count || row.count || 0);
+        const percentage = grandTotal > 0 ? ((count / grandTotal) * 100).toFixed(1) : "0.0";
+        const isKeyHub = geoInfo.isHub;
+
+        // Bảng màu & Kích thước tương ứng số lượng job
+        let color = "#94a3b8";
         let dotSize = 8;
-        let dotColor = '#94a3b8';
 
         if (count >= 1000) {
           dotSize = 32;
-          dotColor = hubColor;
+          color = cleanName === "hồ chí minh" ? "#16a34a" : (cleanName === "đà nẵng" ? "#0284c7" : "#ea580c");
         } else if (count >= 100) {
           dotSize = 22;
-          dotColor = '#ea580c';
+          color = "#ea580c";
         } else if (count >= 50) {
           dotSize = 16;
-          dotColor = '#f97316';
+          color = "#f97316";
         } else if (count >= 20) {
           dotSize = 13;
-          dotColor = '#0284c7';
-        } else if (count >= 10) {
+          color = "#0284c7";
+        } else if (count > 0) {
           dotSize = 10;
-          dotColor = '#0284c7';
-        } else {
-          dotSize = 7;
-          dotColor = '#38bdf8';
+          color = "#38bdf8";
         }
 
-        let iconHtml = '';
-        let iconSize = [dotSize, dotSize];
-        let iconAnchor = [dotSize / 2, dotSize / 2];
+        let iconMarkup = "";
+        let iconDimensions = [dotSize, dotSize];
+        let iconPivot = [dotSize / 2, dotSize / 2];
 
-        if (isHub) {
-          const outerSize = Math.max(36, dotSize + 10);
-          iconSize = [outerSize, outerSize];
-          iconAnchor = [outerSize / 2, outerSize / 2];
-          iconHtml = `
-            <div class="leaflet-hub-marker" style="width: ${outerSize}px; height: ${outerSize}px;">
-              <span class="hub-pulse" style="width: ${outerSize}px; height: ${outerSize}px; background-color: ${hubColor};"></span>
-              <span class="hub-dot" style="width: ${dotSize - 10}px; height: ${dotSize - 10}px; background-color: ${hubColor};"></span>
+        if (isKeyHub) {
+          const radarRingSize = dotSize + 14;
+          iconDimensions = [radarRingSize, radarRingSize];
+          iconPivot = [radarRingSize / 2, radarRingSize / 2];
+          iconMarkup = `
+            <div class="hub-marker-wrapper" style="width: ${radarRingSize}px; height: ${radarRingSize}px;">
+              <span class="hub-pulse-radar" style="width: ${radarRingSize}px; height: ${radarRingSize}px; background-color: ${color};"></span>
+              <span class="hub-center-core" style="width: ${dotSize}px; height: ${dotSize}px; background-color: ${color};"></span>
             </div>
           `;
         } else {
-          iconHtml = `
+          iconMarkup = `
             <div style="
               width: ${dotSize}px;
               height: ${dotSize}px;
-              background-color: ${dotColor};
+              background-color: ${color};
               border: 2px solid #ffffff;
               border-radius: 50%;
               box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -377,81 +432,107 @@
           `;
         }
 
-        const markerIcon = L.divIcon({
-          className: 'custom-map-icon',
-          html: iconHtml,
-          iconSize: iconSize,
-          iconAnchor: iconAnchor
+        const divIcon = L.divIcon({
+          className: "custom-leaflet-icon",
+          html: iconMarkup,
+          iconSize: iconDimensions,
+          iconAnchor: iconPivot
         });
 
-        const marker = L.marker([node.lat, node.lng], { icon: markerIcon });
+        const marker = L.marker([geoInfo.lat, geoInfo.lng], { icon: divIcon });
 
-        // Tooltip cố định cho 3 Hubs lớn
-        if (isHub) {
-          const tooltipContent = `
-            <div style="border-left: 3.5px solid ${hubColor}; padding: 2px 4px;">
+        // Tooltip cố định cho 3 cực (Hà Nội, Đà Nẵng, HCM)
+        if (isKeyHub) {
+          const hubIconEmoji = cleanName === "hồ chí minh" ? "🚀" : (cleanName === "đà nẵng" ? "🌴" : "🏛️");
+          const cardHtml = `
+            <div style="border-left: 3.5px solid ${color}; padding: 2px 4px;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px;">
-                <strong style="font-size: 12px; color: ${hubColor}; font-weight: 800;">
-                  ${node.id === 'hanoi' ? '🏛️' : node.id === 'danang' ? '🌴' : '🚀'} ${node.name}
+                <strong style="font-size: 12px; color: ${color}; font-weight: 800;">
+                  ${hubIconEmoji} ${rawLoc}
                 </strong>
-                <span style="font-size: 10px; font-weight: 700; color: ${hubColor}; background: #f8fafc; padding: 1px 4px; border-radius: 4px; border: 1px solid ${hubColor}40;">
-                  ${stat.percentage}%
+                <span style="font-size: 10px; font-weight: 700; color: ${color}; background: #f8fafc; padding: 1px 4px; border-radius: 4px; border: 1px solid ${color}40;">
+                  ${percentage}%
                 </span>
               </div>
-              <div style="font-size: 11px; font-weight: 700; color: #0f172a;">💼 ${stat.jobCount.toLocaleString()} việc làm</div>
-              <div style="font-size: 10px; color: #475569;">🏢 ${stat.companyCount.toLocaleString()} công ty</div>
+              <div style="font-size: 11px; font-weight: 700; color: #0f172a;">💼 ${count.toLocaleString()} việc làm</div>
             </div>
           `;
 
-          marker.bindTooltip(tooltipContent, {
+          marker.bindTooltip(cardHtml, {
             permanent: true,
-            direction: node.id === 'danang' ? 'right' : 'left',
-            offset: node.id === 'danang' ? [14, 0] : [-14, 0],
-            className: 'leaflet-permanent-tooltip'
+            direction: cleanName === "đà nẵng" ? "right" : "left",
+            offset: cleanName === "đà nẵng" ? [16, 0] : [-16, 0],
+            className: "leaflet-permanent-hub-card"
           });
         } else {
-          // Tooltip hover cho các tỉnh còn lại
-          const hoverContent = `
+          // Tooltip khi hover cho các tỉnh còn lại
+          const hoverHtml = `
             <div style="font-size: 11px; color: #0f172a; line-height: 1.4;">
-              <strong style="color: #ea580c; font-size: 12px;">📍 ${node.name}</strong><br/>
-              💼 Việc làm: <b>${stat.jobCount.toLocaleString()}</b> (${stat.percentage}%)<br/>
-              🏢 Công ty: <b>${stat.companyCount.toLocaleString()}</b>
+              <strong style="font-size: 12px; color: #ea580c;">📍 ${rawLoc}</strong><br/>
+              💼 Số việc làm: <b>${count.toLocaleString()}</b> (${percentage}%)
             </div>
           `;
 
-          marker.bindTooltip(hoverContent, {
+          marker.bindTooltip(hoverHtml, {
             permanent: false,
             sticky: true,
-            direction: 'top',
+            direction: "top",
             offset: [0, -dotSize / 2 - 2],
-            className: 'leaflet-hover-tooltip'
+            className: "leaflet-hover-node-card"
           });
         }
 
-        marker.addTo(layerGroup);
+        marker.addTo(markersLayer);
       });
     }
 
-    function setRegion(region) {
-      currentRegion = region;
-      document.querySelectorAll('.region-btn').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = event ? event.target : document.querySelector('.region-btn');
-      if (activeBtn) activeBtn.classList.add('active');
+    // Lọc theo miền
+    function applyRegionFilter(regionKey) {
+      activeRegion = regionKey;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      if (window.event && window.event.target) {
+        window.event.target.classList.add("active");
+      }
 
-      renderMarkers();
+      renderMapMarkers();
 
-      if (region === 'north') {
-        map.flyTo([21.0, 105.8], 7, { duration: 0.6 });
-      } else if (region === 'central') {
-        map.flyTo([15.8, 108.2], 7, { duration: 0.6 });
-      } else if (region === 'south') {
-        map.flyTo([10.5, 106.6], 7, { duration: 0.6 });
+      if (regionKey === "north") {
+        mapInstance.flyTo([21.0, 105.8], 7, { duration: 0.6 });
+      } else if (regionKey === "central") {
+        mapInstance.flyTo([15.8, 108.2], 7, { duration: 0.6 });
+      } else if (regionKey === "south") {
+        mapInstance.flyTo([10.5, 106.6], 7, { duration: 0.6 });
       } else {
-        map.flyTo([16.0, 107.5], 6, { duration: 0.6 });
+        mapInstance.flyTo([16.0, 107.5], 6, { duration: 0.6 });
       }
     }
 
-    window.addEventListener('DOMContentLoaded', initMap);
+    /**
+     * HÀM NHẬN DATA TỪ POWER BI / BÊN NGOÀI
+     * Format truyền vào: Array các Object [{ location_standard: "Hà Nội", distinct_job_titles: 1500 }, ...]
+     */
+    window.updateMapData = function(newData) {
+      if (Array.isArray(newData)) {
+        currentData = newData;
+        renderMapMarkers();
+      }
+    };
+
+    // Lắng nghe Message event nếu trang được nhúng qua iframe từ Power BI
+    window.addEventListener("message", function(event) {
+      if (event.data && event.data.type === "UPDATE_JOBS_MAP") {
+        window.updateMapData(event.data.payload);
+      }
+    });
+
+    // Khởi chạy khi DOM sẵn sàng
+    window.addEventListener("DOMContentLoaded", () => {
+      // Kiểm tra xem có dữ liệu gắn sẵn trong window.powerBIData không
+      if (window.powerBIData && Array.isArray(window.powerBIData)) {
+        currentData = window.powerBIData;
+      }
+      setupMap();
+    });
   </script>
 </body>
 </html>
